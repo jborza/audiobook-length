@@ -10,10 +10,7 @@ import math
 def get_directories(path):
     items = os.listdir(path)
     # filter out only directories
-    directories = []
-    for item in items:
-        if os.path.isdir(os.path.join(path, item)):
-            directories.append(item)
+    directories = [item for item in items if os.path.isdir]
     # add path
     directories = [os.path.join(path, item) for item in directories]
     return directories
@@ -59,7 +56,7 @@ def directory_report(path):
         files = get_media_files(dir)
         audio_length = get_total_length(files)
         if audio_length == 0:
-            return
+            continue
         print(dir)
         print(seconds_to_hms(audio_length))
 
