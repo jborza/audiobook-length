@@ -4,6 +4,7 @@
 import os
 import datetime
 from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
 import math
 
 def get_directories(path):
@@ -17,20 +18,33 @@ def get_directories(path):
     directories = [os.path.join(path, item) for item in directories]
     return directories
 
+def is_media(path):
+    return path.endswith('.mp3') or path.endswith('.m4b')
+
 def get_media_files(path):
     items = os.listdir(path)
-    # filter out only mp3 files (add m4b later)
-    media_files = [item for item in items if item.endswith('.mp3')]
+    # filter out only mp3 and m4b files
+    media_files = [item for item in items if is_media(item)]
     # add path
     media_files = [os.path.join(path, item) for item in media_files]
     return media_files
 
 def get_mp3_length(file):
+    if not file.endswith('.mp3'):
+        return 0
     audio = MP3(file)
     return audio.info.length
 
+def get_m4b_length(file):
+    if not file.endswith('.m4b'):
+        return 0
+    audio = MP4(file)
+    return audio.info.length
+
 def get_total_length(files):
-    return sum([get_mp3_length(file) for file in files])
+    mp3sum = sum([get_mp3_length(file) for file in files])
+    m4bsum = sum([get_m4b_length(file) for file in files])
+    return mp3sum + m4bsum
 
 def seconds_to_hms(seconds):
     delta = datetime.timedelta(seconds=math.floor(seconds))
