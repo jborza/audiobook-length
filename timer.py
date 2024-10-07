@@ -36,12 +36,18 @@ def seconds_to_hms(seconds):
     delta = datetime.timedelta(seconds=math.floor(seconds))
     return str(delta)
 
-#path = "c:\\Users\\juraj\\OneDrive\\media\\audiobooks\\František Kotleta\\František Kotleta - Lovci"
-path = "c:\\Users\\juraj\\OneDrive\\media\\audiobooks\\František Kotleta\\František Kotleta - Bratrstvo krve"
-dirs = get_directories(path)
-print(dirs)
-for dir in dirs:
-    files = get_media_files(dir)
-    audio_length = get_total_length(files)
-    print(dir)
-    print(seconds_to_hms(audio_length))
+def directory_report(path):
+    dirs = get_directories(path)
+    for dir in dirs:
+        subdirs = get_directories(dir)
+        if subdirs:
+            directory_report(dir)
+        files = get_media_files(dir)
+        audio_length = get_total_length(files)
+        if audio_length == 0:
+            return
+        print(dir)
+        print(seconds_to_hms(audio_length))
+
+path = 'audiobooks'
+directory_report(path)
