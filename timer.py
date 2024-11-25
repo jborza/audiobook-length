@@ -6,17 +6,18 @@ import datetime
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 import math
+from tinytag import TinyTag
 
 def get_directories(path):
     items = os.listdir(path)
     # filter out only directories
-    directories = [item for item in items if os.path.isdir]
+    directories = [item for item in items if os.path.isdir(os.path.join(path, item))]
     # add path
     directories = [os.path.join(path, item) for item in directories]
     return directories
 
 def is_media(path):
-    return path.endswith('.mp3') or path.endswith('.m4b')
+    return path.endswith('.mp3') or path.endswith('.m4b') or path.endswith('.opus')
 
 def get_media_files(path):
     items = os.listdir(path)
@@ -38,10 +39,17 @@ def get_m4b_length(file):
     audio = MP4(file)
     return audio.info.length
 
+def get_opus_length(file):
+    if not file.endswith('.opus'):
+        return 0
+    tag = TinyTag.get(file)
+    return tag.duration
+
 def get_total_length(files):
     mp3sum = sum([get_mp3_length(file) for file in files])
     m4bsum = sum([get_m4b_length(file) for file in files])
-    return mp3sum + m4bsum
+    opussum = sum([get_opus_length(file) for file in files])
+    return mp3sum + m4bsum + opussum
 
 def seconds_to_hms(seconds):
     delta = datetime.timedelta(seconds=math.floor(seconds))
@@ -54,10 +62,12 @@ def directory_report(path):
         if subdirs:
             directory_report(dir)
         files = get_media_files(dir)
+        if len(files) == 0:
+            continue
         audio_length = get_total_length(files)
         if audio_length == 0:
             continue
-        print(dir)
+        print(dir, end=', ')
         print(seconds_to_hms(audio_length))
 
 path = 'audiobooks'
