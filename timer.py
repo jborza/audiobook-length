@@ -3,10 +3,15 @@
 # calculate length of each file and add it to a total time
 import os
 import datetime
+import sys
 from mutagen.mp3 import MP3
 from mutagen.mp4 import MP4
 import math
 from tinytag import TinyTag
+
+use_opus = False
+output_markdown = True
+output = []
 
 def get_directories(path):
     items = os.listdir(path)
@@ -17,7 +22,10 @@ def get_directories(path):
     return directories
 
 def is_media(path):
-    return path.endswith('.mp3') or path.endswith('.m4b') or path.endswith('.opus')
+    if use_opus:
+        return path.endswith('.mp3') or path.endswith('.m4b') or path.endswith('.opus')
+    else:
+        return path.endswith('.mp3') or path.endswith('.m4b')
 
 def get_media_files(path):
     items = os.listdir(path)
@@ -48,12 +56,17 @@ def get_opus_length(file):
 def get_total_length(files):
     mp3sum = sum([get_mp3_length(file) for file in files])
     m4bsum = sum([get_m4b_length(file) for file in files])
-    opussum = sum([get_opus_length(file) for file in files])
-    return mp3sum + m4bsum + opussum
+    if use_opus:
+        opussum = sum([get_opus_length(file) for file in files])
+        return mp3sum + m4bsum + opussum
+    else:
+        return mp3sum + m4bsum
 
 def seconds_to_hms(seconds):
-    delta = datetime.timedelta(seconds=math.floor(seconds))
-    return str(delta)
+    h = math.floor(seconds // 3600)
+    m = math.floor(seconds % 3600 // 60)
+    s = math.floor(seconds % 60)
+    return '{:02}:{:02}:{:02}'.format(h, m, s)
 
 def directory_report(path):
     dirs = get_directories(path)
@@ -67,8 +80,24 @@ def directory_report(path):
         audio_length = get_total_length(files)
         if audio_length == 0:
             continue
-        print(dir, end=', ')
-        print(seconds_to_hms(audio_length))
+        if output_markdown:
+            output.append({'dir': dir, 'length': audio_length})
+            # print("|", end="")
+            # print("|".join([f'{dir}', seconds_to_hms(audio_length)]), end="")
+            # print("|")
+        else:
+            print(f'"{dir}"', end=', ')
+            print(seconds_to_hms(audio_length))
 
+sys.stdout.reconfigure(encoding='utf-8')
 path = 'audiobooks'
+if output_markdown:
+    print("|Directory|Length|")
+    print("|---|---|")
+else:
+    print('Directory, Length')
 directory_report(path)
+if output_markdown:
+    output = sorted(output, key=lambda x: x['length'])
+    for item in output:
+        print(f'|{item["dir"]}|{seconds_to_hms(item["length"])}|')
